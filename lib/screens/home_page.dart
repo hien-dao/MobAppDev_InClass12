@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../data/database_helper.dart';
 import '../data/item.dart';
@@ -17,10 +15,12 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
+  @override
   void initState() {
     super.initState();
   }
 
+  @override
   void dispose() {
     _nameController.dispose();
     _amountController.dispose();
@@ -42,12 +42,114 @@ class _HomePageState extends State<HomePage> {
           }
           if (snapshot.hasError) return Text('Error: ${snapshot.error}');
           final items = snapshot.data ?? [];
-          if (items.isEmpty) return const Text('No items yet.');
+
+          if (items.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('No items yet!')
+              );
+          }
+
           return ListView.builder(
             itemCount: items.length,
-            itemBuilder: (_, i) => ListTile(title: Text(items[i].name)),
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: ListTile(
+                  title: Text(item.name),
+                  subtitle: Text('Amount: ${item.amount}\n${item.description}'),
+                  isThreeLine: true,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () {
+                          _nameController.text = item.name;
+                          _amountController.text = item.amount.toString();
+                          _descriptionController.text = item.description;
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Edit Item'),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Name')),
+                                  TextField(controller: _amountController, decoration: const InputDecoration(labelText: 'Amount'), keyboardType: TextInputType.number),
+                                  TextField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Description')),
+                                ],
+                              ),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    final updatedItem = Item(
+                                      id: item.id,
+                                      name: _nameController.text,
+                                      amount: int.tryParse(_amountController.text) ?? 0,
+                                      description: _descriptionController.text,
+                                    );
+                                    DatabaseHelper().updateItem(updatedItem);
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text('Save'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () => DatabaseHelper().deleteItem(item.id),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _nameController.clear();
+          _amountController.clear();
+          _descriptionController.clear();
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Add Item'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Name')),
+                  TextField(controller: _amountController, decoration: const InputDecoration(labelText: 'Amount'), keyboardType: TextInputType.number),
+                  TextField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Description')),
+                ],
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                ElevatedButton(
+                  onPressed: () {
+                    final newItem = Item(
+                      id: '',
+                      name: _nameController.text,
+                      amount: int.tryParse(_amountController.text) ?? 0,
+                      description: _descriptionController.text,
+                    );
+                    DatabaseHelper().addItem(newItem);
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Add'),
+                ),
+              ],
+            ),
+          );
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }
