@@ -14,7 +14,7 @@ class DatabaseHelper {
 
   Stream<List<Item>> streamItems() {
     return itemsRef.snapshots().map(
-      (snap) => snap.docs.map((d) => Item.fromMap(d.data(), d.id)).toList(),
+      (snap) => snap.docs.map((d) => Item.fromMap(d.data() as Map<String, dynamic>, d.id)).toList(),
     );
   }
 
@@ -26,21 +26,29 @@ class DatabaseHelper {
     await itemsRef.doc(id).delete();
   }
 
-  // Search by name
-  Stream<List<Item>> searchItems(String query) {
-    return itemsRef
-        .where('name', isGreaterThanOrEqualTo: query)
-        .where('name', isLessThanOrEqualTo: query + '\uf8ff')
-        .snapshots()
-        .map((snap) => snap.docs.map((d) => Item.fromMap(d.data(), d.id)).toList());
-  }
+  Stream<List<Item>> queryItems({
+    String? search,
+    int? min,
+    int? max,
+  }) {
+    Query query = itemsRef;
 
-  // Filter by amount range
-  Stream<List<Item>> filterItems(int minAmount, int maxAmount) {
-    return itemsRef
-        .where('amount', isGreaterThanOrEqualTo: minAmount)
-        .where('amount', isLessThanOrEqualTo: maxAmount)
-        .snapshots()
-        .map((snap) => snap.docs.map((d) => Item.fromMap(d.data(), d.id)).toList());
+    if (search != null && search.isNotEmpty) {
+      query = query
+        .where('name', isGreaterThanOrEqualTo: search)
+        .where('name', isLessThanOrEqualTo: search + '\uf8ff');
+    }
+
+    if (min != null) {
+      query = query.where('amount', isGreaterThanOrEqualTo: min);
+    }
+
+    if (max != null) {
+      query = query.where('amount', isLessThanOrEqualTo: max);
+    }
+
+    return query.snapshots().map(
+      (snap) => snap.docs.map((d) => Item.fromMap(d.data() as Map<String, dynamic>, d.id)).toList(),
+    );
   }
 }
