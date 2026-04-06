@@ -11,6 +11,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final _formKey = GlobalKey<FormState>();
+
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -76,23 +78,38 @@ class _HomePageState extends State<HomePage> {
                               content: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Name')),
-                                  TextField(controller: _amountController, decoration: const InputDecoration(labelText: 'Amount'), keyboardType: TextInputType.number),
-                                  TextField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Description')),
+                                  TextFormField(
+                                    controller: _nameController,
+                                    decoration: const InputDecoration(labelText: 'Name'),
+                                    validator: (value) => value == null || value.isEmpty ? 'Please enter a name' : null,
+                                  ),
+                                  TextFormField(
+                                    controller: _amountController,
+                                    decoration: const InputDecoration(labelText: 'Amount'),
+                                    keyboardType: TextInputType.number,
+                                    validator: (value) => value == null || value.isEmpty ? 'Please enter an amount' : null,
+                                  ),
+                                  TextFormField(
+                                    controller: _descriptionController,
+                                    decoration: const InputDecoration(labelText: 'Description'),
+                                    validator: (value) => value == null || value.isEmpty ? 'Please enter a description' : null,
+                                  ),
                                 ],
                               ),
                               actions: [
                                 TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
                                 ElevatedButton(
                                   onPressed: () {
-                                    final updatedItem = Item(
-                                      id: item.id,
-                                      name: _nameController.text,
-                                      amount: int.tryParse(_amountController.text) ?? 0,
-                                      description: _descriptionController.text,
-                                    );
-                                    DatabaseHelper().updateItem(updatedItem);
-                                    Navigator.pop(context);
+                                    if (_formKey.currentState!.validate()) {
+                                      final updatedItem = Item(
+                                        id: item.id,
+                                        name: _nameController.text,
+                                        amount: int.tryParse(_amountController.text) ?? 0,
+                                        description: _descriptionController.text,
+                                      );
+                                      DatabaseHelper().updateItem(updatedItem);
+                                      Navigator.pop(context);
+                                    }
                                   },
                                   child: const Text('Save'),
                                 ),
@@ -125,23 +142,38 @@ class _HomePageState extends State<HomePage> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Name')),
-                  TextField(controller: _amountController, decoration: const InputDecoration(labelText: 'Amount'), keyboardType: TextInputType.number),
-                  TextField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Description')),
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(labelText: 'Name'),
+                    validator: (value) => value == null || value.isEmpty ? 'Please enter a name' : null,
+                  ),
+                  TextFormField(
+                    controller: _amountController,
+                    decoration: const InputDecoration(labelText: 'Amount'),
+                    keyboardType: TextInputType.number,
+                    validator: (value) => value == null || value.isEmpty ? 'Please enter an amount' : null,
+                  ),
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: const InputDecoration(labelText: 'Description'),
+                    validator: (value) => value == null || value.isEmpty ? 'Please enter a description' : null,
+                  ),
                 ],
               ),
               actions: [
                 TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
                 ElevatedButton(
                   onPressed: () {
-                    final newItem = Item(
-                      id: '',
-                      name: _nameController.text,
-                      amount: int.tryParse(_amountController.text) ?? 0,
-                      description: _descriptionController.text,
-                    );
-                    DatabaseHelper().addItem(newItem);
-                    Navigator.pop(context);
+                    if (_formKey.currentState!.validate()) {
+                      final newItem = Item(
+                        id: '',
+                        name: _nameController.text,
+                        amount: int.tryParse(_amountController.text) ?? 0,
+                        description: _descriptionController.text,
+                      );
+                      DatabaseHelper().addItem(newItem);
+                      Navigator.pop(context);
+                    }
                   },
                   child: const Text('Add'),
                 ),
